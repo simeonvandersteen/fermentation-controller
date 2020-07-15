@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 rplcd = "*"
 "rpi.gpio" = "*"
+simple-pid = "*"
 
 [dev-packages]
 pytest = "*"

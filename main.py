@@ -2,6 +2,7 @@ import logging
 from threading import Thread
 from time import sleep
 
+from fermentation_controller.controller import Controller
 from fermentation_controller.display import Display
 from fermentation_controller.sensor import Sensor
 from fermentation_controller.switch import Switch
@@ -12,17 +13,23 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    display = Display(["environment", "vessel", "fridge", "target"], ["heater", "chiller"])
-    display.handle_temperature("target", 18)
+    target_temperature = 25
+    controller_sample_time = 5
+    controller_threshold = 0.5
+
+    display = Display(["environment", "vessel", "fridge", "target"], ["heater", "cooler"])
+    display.handle_temperature("target", target_temperature)
 
     env_sensor = Sensor("environment", "28-0301a27988e2", "/sys/bus/w1/devices", [display])
     vessel_sensor = Sensor("vessel", "28-0301a2799ddf", "/sys/bus/w1/devices", [display])
     fridge_sensor = Sensor("fridge", "28-0301a2798a9f", "/sys/bus/w1/devices", [display])
 
     heater_switch = Switch("heater", 16, [display])
-    chiller_switch = Switch("chiller", 20, [display])
+    cooler_switch = Switch("cooler", 20, [display])
 
-    runnables = [(env_sensor, 1), (vessel_sensor, 1), (fridge_sensor, 1)]
+    controller = Controller(target_temperature, controller_sample_time, controller_threshold, heater_switch, cooler_switch, vessel_sensor)
+
+    runnables = [(env_sensor, 1), (vessel_sensor, 1), (fridge_sensor, 1), (controller, controller_sample_time)]
 
     threads = []
     for runnable, interval in runnables:
@@ -42,7 +49,7 @@ def main():
 
     display.shutdown()
     heater_switch.shutdown()
-    # chiller_switch.shutdown()
+    # cooler_switch.shutdown()
 
 
 if __name__ == '__main__':

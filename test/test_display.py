@@ -9,6 +9,15 @@ from fermentation_controller.display import Display
 class TestDisplay:
 
     @patch('fermentation_controller.display.CharLCD')
+    def test_clears_display_on_startup(self, lcd_mock_class):
+        lcd_mock = lcd_mock_class.return_value
+
+        Display([], [])
+
+        lcd_mock.clear.assert_called()
+
+
+    @patch('fermentation_controller.display.CharLCD')
     def test_writes_temperatures_to_lcd(self, lcd_mock_class):
         lcd_mock = lcd_mock_class.return_value
 
@@ -40,7 +49,7 @@ class TestDisplay:
         cursor_mock = PropertyMock()
         type(lcd_mock).cursor_pos = cursor_mock
 
-        display = Display([], ["heater", "chiller"])
+        display = Display([], ["heater", "cooler"])
 
         display.handle_switch("heater", True)
         cursor_mock.assert_called_with((0, 14))
@@ -50,11 +59,11 @@ class TestDisplay:
         cursor_mock.assert_called_with((0, 14))
         lcd_mock.write_string.assert_called_with(" ")
 
-        display.handle_switch("chiller", True)
+        display.handle_switch("cooler", True)
         cursor_mock.assert_called_with((1, 14))
         lcd_mock.write_string.assert_called_with("C")
 
-        display.handle_switch("chiller", False)
+        display.handle_switch("cooler", False)
         cursor_mock.assert_called_with((1, 14))
         lcd_mock.write_string.assert_called_with(" ")
 
@@ -65,7 +74,7 @@ class TestDisplay:
         cursor_mock = PropertyMock()
         type(lcd_mock).cursor_pos = cursor_mock
 
-        display = Display(["vessel"], ["heater", "chiller"])
+        display = Display(["vessel"], ["heater", "cooler"])
 
         display.handle_switch("inbetweener", True)
         display.handle_temperature("tropics", 42.3)
@@ -81,11 +90,11 @@ class TestDisplay:
         cursor_mock.side_effect = self.__delay
         type(lcd_mock).cursor_pos = cursor_mock
 
+        display = Display(["environment"], ["heater"])
+
         manager = Mock()
         manager.attach_mock(lcd_mock, 'lcd_mock')
         manager.cursor_mock = cursor_mock
-
-        display = Display(["environment"], ["heater"])
 
         t1 = Thread(target=display.handle_temperature, args=("environment", 12.3,))
         t2 = Thread(target=display.handle_switch, args=("heater", True,))

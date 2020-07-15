@@ -22,6 +22,7 @@ class Display(SensorListener, SwitchListener):
         self.logger.debug("Initiating LCD")
         self.lcd = CharLCD(numbering_mode=GPIO.BCM, cols=16, rows=2, pin_rs=22, pin_e=17, pins_data=[26, 19, 13, 6])
         self.lcd.cursor_mode = 'hide'
+        self.lcd.clear()
 
         self.write_lock = Lock()
 
