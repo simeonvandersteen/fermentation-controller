@@ -82,3 +82,39 @@ class TestController:
             cooler.set.assert_not_called()
         else:
             cooler.set.assert_called_with(c_switch)
+
+    @pytest.mark.parametrize("control, h_current, c_current, h_switch, c_switch", [
+        (.1, False, False, True, None),  # switch heating on if above zero
+        (.1, True, False, None, None),  # leave heating on if above zero and already on
+        (.1, True, True, None, False),  # switch cooling off if above zero
+        (0, True, True, False, False),  # do switch heating/cooling off if zero
+        (-.1, True, True, False, None),  # switch heating off if under zero
+        (-.1, False, True, None, None),  # leave cooling on if under zero and already on
+        (-.1, False, False, None, True),  # switch cooling on if under zero
+
+    ])
+    @patch('fermentation_controller.controller.PID')
+    def test_switch_heating_and_cooling_without_threshold(
+            self, pid_mock_class, control, h_current, h_switch, c_current, c_switch):
+        pid_mock = pid_mock_class.return_value
+
+        heater = Mock()
+        heater.get.return_value = h_current
+        cooler = Mock()
+        cooler.get.return_value = c_current
+
+        pid_mock.return_value = control
+
+        controller = Controller(20, 5, 0, heater, cooler, Mock())
+
+        controller.control()
+
+        if h_switch is None:
+            heater.set.assert_not_called()
+        else:
+            heater.set.assert_called_with(h_switch)
+
+        if c_switch is None:
+            cooler.set.assert_not_called()
+        else:
+            cooler.set.assert_called_with(c_switch)
