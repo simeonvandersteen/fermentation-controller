@@ -29,7 +29,6 @@ class Controller(Runnable):
 
     def shutdown(self) -> None:
         self.logger.debug("Shutting down controller")
-        pass
 
     def control(self) -> None:
         control = self.pid(self.current_temp.get())
