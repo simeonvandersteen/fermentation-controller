@@ -35,7 +35,7 @@ class Display(SensorListener, SwitchListener):
 
         self.__write(14, y, name[0].upper() if on else " ")
 
-    def handle_temperature(self, name: str, temperate: float) -> None:
+    def handle_temperature(self, name: str, temperature: float) -> None:
         if name not in self.sensor_names:
             self.logger.warning("Device '%s' is not configured to be printed to LCD", name)
             return
@@ -43,7 +43,7 @@ class Display(SensorListener, SwitchListener):
         y = floor(self.sensor_names.index(name) / 2)
         x = (self.sensor_names.index(name) - 2 * y) * 7
 
-        self.__write(x, y, "%s %s" % (name[0].upper(), round(temperate, 1)))
+        self.__write(x, y, "%s %s" % (name[0].upper(), round(temperature, 1)))
 
     def __write(self, x, y, text) -> None:
         self.logger.debug("Writing '%s' to LCD at (%s,%s)", text, x, y)

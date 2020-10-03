@@ -26,6 +26,6 @@ class TestConfig:
         mock_config.side_effect = handlers
 
         config = Config("config.json")
-        config.reload()
+        config.run()
 
         assert config.get("p") == 5
