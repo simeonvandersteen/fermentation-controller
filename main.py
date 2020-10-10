@@ -1,5 +1,6 @@
 import logging
 from threading import Thread
+import signal
 from time import sleep
 
 from fermentation_controller.config import Config
@@ -13,8 +14,21 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
+shutdown = False
+
+
+def start_shutdown(signum, frame):
+    global shutdown
+    shutdown = True
+
+
+signal.signal(signal.SIGINT, start_shutdown)
+signal.signal(signal.SIGTERM, start_shutdown)
+
 
 def main():
+    global shutdown
+
     config = Config("./config.json")
     controller_sample_time = 5
     controller_threshold = 0.5
@@ -44,15 +58,14 @@ def main():
         threads.append(t)
         t.start()
 
-    try:
-        while True:
-            sleep(1)
-    except KeyboardInterrupt:
-        logger.info("Received interrupt, shutting down")
+    while not shutdown:
+        sleep(1)
 
-        for index, (runnable, interval) in enumerate(runnables):
-            runnable.stop()
-            threads[index].join()
+    logger.info("Received interrupt, shutting down")
+
+    for index, (runnable, interval) in enumerate(runnables):
+        runnable.stop()
+        threads[index].join()
 
     display.shutdown()
     heater_switch.shutdown()

@@ -1,0 +1,13 @@
+[Unit]
+Description=Fermentation Controller
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+Restart=always
+WorkingDirectory=/usr/local/src/fermentation-controller
+ExecStart=/usr/bin/pipenv run python3 /usr/local/src/fermentation-controller/main.py
+
+[Install]
+WantedBy=multi-user.target
