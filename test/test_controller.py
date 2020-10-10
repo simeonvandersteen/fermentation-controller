@@ -15,7 +15,7 @@ class TestController:
         config = Mock()
         config.get.side_effect = lambda key: {"p": 1, "i": 2, "d": 3, "target": 23}.get(key)
 
-        Controller(config, 5, 0.5, Mock(), Mock(), Mock())
+        Controller(config, 5, 0.5, Mock(), Mock(), Mock(), [])
 
         pid_mock_class.assert_called_with(Kp=1, Ki=2, Kd=3,
                                           setpoint=23,
@@ -37,7 +37,11 @@ class TestController:
         type(pid_mock).tunings = tunings_mock
         tunings_mock.return_value = (1, 2, 3)
 
-        controller = Controller(config, 5, 0.5, Mock(), Mock(), temperature)
+        components_mock = PropertyMock()
+        type(pid_mock).components = components_mock
+        components_mock.return_value = (4, 3, 2)
+
+        controller = Controller(config, 5, 0.5, Mock(), Mock(), temperature, [])
 
         config.get.side_effect = lambda key: {"p": 4, "i": 5, "d": 6, "target": 23}.get(key)
 
@@ -63,7 +67,11 @@ class TestController:
         type(pid_mock).tunings = tunings_mock
         tunings_mock.return_value = (1, 2, 3)
 
-        controller = Controller(config, 5, 0.5, Mock(), Mock(), temperature)
+        components_mock = PropertyMock()
+        type(pid_mock).components = components_mock
+        components_mock.return_value = (4, 3, 2)
+
+        controller = Controller(config, 5, 0.5, Mock(), Mock(), temperature, [])
 
         pid_mock.return_value = 5
 
@@ -84,7 +92,11 @@ class TestController:
         type(pid_mock).tunings = tunings_mock
         tunings_mock.return_value = (1, 2, 3)
 
-        controller = Controller(Mock(), 5, 0.5, Mock(), Mock(), temperature)
+        components_mock = PropertyMock()
+        type(pid_mock).components = components_mock
+        components_mock.return_value = (4, 3, 2)
+
+        controller = Controller(Mock(), 5, 0.5, Mock(), Mock(), temperature, [])
 
         pid_mock.return_value = 5
 
@@ -107,7 +119,11 @@ class TestController:
         type(pid_mock).tunings = tunings_mock
         tunings_mock.return_value = (1, 2, 3)
 
-        controller = Controller(Mock(), 5, 0.5, heater, cooler, Mock())
+        components_mock = PropertyMock()
+        type(pid_mock).components = components_mock
+        components_mock.return_value = (4, 3, 2)
+
+        controller = Controller(Mock(), 5, 0.5, heater, cooler, Mock(), [])
 
         controller.control()
 
@@ -141,7 +157,11 @@ class TestController:
         type(pid_mock).tunings = tunings_mock
         tunings_mock.return_value = (1, 2, 3)
 
-        controller = Controller(Mock(), 5, 0.5, heater, cooler, Mock())
+        components_mock = PropertyMock()
+        type(pid_mock).components = components_mock
+        components_mock.return_value = (4, 3, 2)
+
+        controller = Controller(Mock(), 5, 0.5, heater, cooler, Mock(), [])
 
         controller.control()
 
@@ -180,7 +200,11 @@ class TestController:
         type(pid_mock).tunings = tunings_mock
         tunings_mock.return_value = (1, 2, 3)
 
-        controller = Controller(Mock(), 5, 0, heater, cooler, Mock())
+        components_mock = PropertyMock()
+        type(pid_mock).components = components_mock
+        components_mock.return_value = (4, 3, 2)
+
+        controller = Controller(Mock(), 5, 0, heater, cooler, Mock(), [])
 
         controller.control()
 
@@ -193,3 +217,32 @@ class TestController:
             cooler.set.assert_not_called()
         else:
             cooler.set.assert_called_with(c_switch)
+
+    @patch('fermentation_controller.controller.PID')
+    def test_publishes_to_listeners(self, pid_mock_class):
+        pid_mock = pid_mock_class.return_value
+
+        temperature = Mock()
+        current_temp = Mock()
+        listener = Mock()
+
+        temperature.get.return_value = current_temp
+
+        config = Mock()
+        config.get.side_effect = lambda key: {"p": 1, "i": 2, "d": 3, "target": 23}.get(key)
+
+        tunings_mock = PropertyMock()
+        type(pid_mock).tunings = tunings_mock
+        tunings_mock.return_value = (1, 2, 3)
+
+        components_mock = PropertyMock()
+        type(pid_mock).components = components_mock
+        components_mock.return_value = (4, 3, 2)
+
+        controller = Controller(config, 5, 0.5, Mock(), Mock(), temperature, [listener])
+
+        pid_mock.return_value = 6
+
+        controller.control()
+
+        listener.handle_controller.assert_called_with(4, 3, 2, 6)

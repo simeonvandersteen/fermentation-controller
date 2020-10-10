@@ -1,5 +1,7 @@
 import logging
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Iterable
 
 from simple_pid import PID
 
@@ -7,6 +9,13 @@ from .config import Config
 from .runnable import Runnable
 from .sensor import Sensor
 from .switch import Switch
+
+
+class ControllerListener(ABC):
+
+    @abstractmethod
+    def handle_controller(self, p: float, i: float, d: float, control: float) -> None:
+        pass
 
 
 @dataclass
@@ -17,6 +26,7 @@ class Controller(Runnable):
     heater: Switch
     cooler: Switch
     current_temp: Sensor
+    listeners: Iterable[ControllerListener]
 
     def __post_init__(self) -> None:
         self.pid = PID(Kp=self.config.get("p"),
@@ -56,6 +66,13 @@ class Controller(Runnable):
                 self.heater.set(False)
             if not self.cooler.get():
                 self.cooler.set(True)
+
+        (p, i, d) = self.pid.components
+        self.__publish(p, i, d, control)
+
+    def __publish(self, p: float, i: float, d: float, control: float) -> None:
+        for l in self.listeners:
+            l.handle_controller(p, i, d, control)
 
     def __update_tunings(self) -> None:
         p = self.config.get("p")

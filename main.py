@@ -4,6 +4,7 @@ from time import sleep
 
 from fermentation_controller.config import Config
 from fermentation_controller.controller import Controller
+from fermentation_controller.csv_writer import CsvWriter
 from fermentation_controller.display import Display
 from fermentation_controller.sensor import Sensor
 from fermentation_controller.switch import Switch
@@ -21,18 +22,21 @@ def main():
     display = Display(["environment", "vessel", "fridge", "target"], ["heater", "cooler"])
     display.handle_temperature("target", config.get("target"))
 
-    env_sensor = Sensor("environment", "28-0301a27988e2", "/sys/bus/w1/devices", [display])
-    vessel_sensor = Sensor("vessel", "28-0301a2799ddf", "/sys/bus/w1/devices", [display])
-    fridge_sensor = Sensor("fridge", "28-0301a2798a9f", "/sys/bus/w1/devices", [display])
+    csv_writer = CsvWriter(["environment", "vessel", "fridge", "target"], ["heater", "cooler"])
+    csv_writer.handle_temperature("target", config.get("target"))
 
-    heater_switch = Switch("heater", 16, [display])
-    cooler_switch = Switch("cooler", 20, [display])
+    env_sensor = Sensor("environment", "28-0301a27988e2", "/sys/bus/w1/devices", [display, csv_writer])
+    vessel_sensor = Sensor("vessel", "28-0301a2799ddf", "/sys/bus/w1/devices", [display, csv_writer])
+    fridge_sensor = Sensor("fridge", "28-0301a2798a9f", "/sys/bus/w1/devices", [display, csv_writer])
+
+    heater_switch = Switch("heater", 16, [display, csv_writer])
+    cooler_switch = Switch("cooler", 20, [display, csv_writer])
 
     controller = Controller(config, controller_sample_time, controller_threshold, heater_switch, cooler_switch,
-                            vessel_sensor)
+                            vessel_sensor, [csv_writer])
 
     runnables = [(env_sensor, 1), (vessel_sensor, 1), (fridge_sensor, 1), (controller, controller_sample_time),
-                 (config, 5)]
+                 (config, 5), (csv_writer, 10)]
 
     threads = []
     for runnable, interval in runnables:
