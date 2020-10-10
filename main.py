@@ -31,7 +31,7 @@ def main():
 
     config = Config("./config.json")
     controller_sample_time = 5
-    controller_threshold = 0.5
+    controller_threshold = 0.0
 
     display = Display(["environment", "vessel", "fridge", "target"], ["heater", "cooler"])
     display.handle_temperature("target", config.get("target"))
@@ -43,8 +43,8 @@ def main():
     vessel_sensor = Sensor("vessel", "28-0301a2799ddf", "/sys/bus/w1/devices", [display, csv_writer])
     fridge_sensor = Sensor("fridge", "28-0301a27988e2", "/sys/bus/w1/devices", [display, csv_writer])
 
-    heater_switch = Switch("heater", 16, [display, csv_writer])
-    cooler_switch = Switch("cooler", 20, [display, csv_writer])
+    heater_switch = Switch("heater", 20, [display, csv_writer])
+    cooler_switch = Switch("cooler", 16, [display, csv_writer])
 
     controller = Controller(config, controller_sample_time, controller_threshold, heater_switch, cooler_switch,
                             vessel_sensor, [csv_writer])
