@@ -1,7 +1,6 @@
 import logging
-from threading import Thread
 import signal
-from time import sleep
+from threading import Thread, Event
 
 from fermentation_controller.config import Config
 from fermentation_controller.controller import Controller
@@ -14,12 +13,12 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-shutdown = False
+shutdown = Event()
 
 
 def start_shutdown(signum, frame):
     global shutdown
-    shutdown = True
+    shutdown.set()
 
 
 signal.signal(signal.SIGINT, start_shutdown)
@@ -27,8 +26,6 @@ signal.signal(signal.SIGTERM, start_shutdown)
 
 
 def main():
-    global shutdown
-
     config = Config("./config.json")
     controller_sample_time = 5
     controller_threshold = 0.0
@@ -58,8 +55,7 @@ def main():
         threads.append(t)
         t.start()
 
-    while not shutdown:
-        sleep(1)
+    shutdown.wait()
 
     logger.info("Received interrupt, shutting down")
 

@@ -1,20 +1,20 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from time import sleep
+from threading import Event
 
 
 @dataclass
 class Runnable(ABC):
-    alive: bool = field(default=True, init=False)
+    stop_triggered: Event = field(default=Event(), init=False)
 
     def start(self, interval: int) -> None:
-        while self.alive:
+        while not self.stop_triggered.is_set():
             self.run()
-            sleep(interval)
+            self.stop_triggered.wait(interval)
         self.shutdown()
 
     def stop(self) -> None:
-        self.alive = False
+        self.stop_triggered.set()
 
     @abstractmethod
     def run(self) -> None:
