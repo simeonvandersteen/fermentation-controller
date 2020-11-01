@@ -1,5 +1,6 @@
 import csv
 import logging
+import time
 from dataclasses import dataclass
 from typing import List
 
@@ -21,7 +22,7 @@ class CsvWriter(Runnable, SensorListener, SwitchListener, ControllerListener):
         self.data = {name: 0 for name in self.sensor_names + self.switch_names + ['p', 'i', 'd', 'control']}
 
     def run(self) -> None:
-        self.writer.writerow(self.data.values())
+        self.writer.writerow([time.time()] + list(self.data.values()))
         self.file.flush()
 
     def shutdown(self) -> None:

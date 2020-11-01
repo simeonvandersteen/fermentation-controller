@@ -5,8 +5,11 @@ from fermentation_controller.csv_writer import CsvWriter
 
 class TestCsvWriter:
 
-    @patch("builtins.open", new_callable=mock_open)
-    def test_writes_csv_to_file(self, mock_file):
+    @patch("time.time")
+    @patch("builtins.open")
+    def test_writes_csv_to_file(self, mock_file, mock_time):
+        mock_time.return_value = 12.3
+
         writer = CsvWriter(["environment", "vessel", "fridge", "target"], ["heater", "cooler"])
 
         writer.handle_temperature("environment", 1.2)
@@ -20,10 +23,10 @@ class TestCsvWriter:
         writer.run()
 
         handle = mock_file()
-        handle.write.assert_called_once_with('1.2,2,3,31.2,1,0,2.3,3.4,-5.6,12.5\r\n')
+        handle.write.assert_called_once_with('12.3,1.2,2,3,31.2,1,0,2.3,3.4,-5.6,12.5\r\n')
         handle.flush.assert_called()
 
-    @patch("builtins.open", new_callable=mock_open)
+    @patch("builtins.open")
     def test_close_file_on_shutdown(self, mock_file):
         writer = CsvWriter(["environment", "vessel", "fridge", "target"], ["heater", "cooler"])
         writer.shutdown()
