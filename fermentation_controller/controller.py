@@ -56,16 +56,21 @@ class Controller(Runnable):
                 self.cooler.set(False)
             return
 
-        if control >= 0:
+        if control > 0:
             if self.cooler.get():
                 self.cooler.set(False)
             if not self.heater.get():
                 self.heater.set(True)
-        if control <= 0:
+        if control < 0:
             if self.heater.get():
                 self.heater.set(False)
             if not self.cooler.get():
                 self.cooler.set(True)
+        if control == 0:
+            if self.cooler.get():
+                self.cooler.set(False)
+            if self.heater.get():
+                self.heater.set(False)
 
         (p, i, d) = self.pid.components
         self.__publish(p, i, d, control)
