@@ -1,4 +1,4 @@
-from unittest.mock import patch, mock_open
+from unittest.mock import patch
 
 from fermentation_controller.csv_writer import CsvWriter
 

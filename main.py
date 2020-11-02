@@ -27,8 +27,6 @@ signal.signal(signal.SIGTERM, start_shutdown)
 
 def main():
     config = Config("./config.json")
-    controller_sample_time = 5
-    controller_threshold = 0.0
 
     display = Display(["environment", "vessel", "fridge", "target"], ["heater", "cooler"])
     display.handle_temperature("target", config.get("target"))
@@ -43,11 +41,12 @@ def main():
     heater_switch = Switch("heater", 20, [display, csv_writer])
     cooler_switch = Switch("cooler", 16, [display, csv_writer])
 
-    controller = Controller(config, controller_sample_time, controller_threshold, heater_switch, cooler_switch,
+    controller = Controller(config, config.get("control_interval"), config.get("control_deadband"), heater_switch,
+                            cooler_switch,
                             vessel_sensor, [csv_writer])
 
-    runnables = [(env_sensor, 1), (vessel_sensor, 1), (fridge_sensor, 1), (controller, controller_sample_time),
-                 (config, 5), (csv_writer, 10)]
+    runnables = [(env_sensor, 1), (vessel_sensor, 1), (fridge_sensor, 1), (controller, config.get("control_interval")),
+                 (config, 5), (csv_writer, config.get("csv_interval"))]
 
     threads = []
     for runnable, interval in runnables:
