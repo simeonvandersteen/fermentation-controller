@@ -7,7 +7,8 @@ from threading import Event
 class Runnable(ABC):
     stop_triggered: Event = field(default=Event(), init=False)
 
-    def start(self, interval: int) -> None:
+    def start(self, interval: int, init_delay: int) -> None:
+        self.stop_triggered.wait(init_delay)
         while not self.stop_triggered.is_set():
             self.run()
             self.stop_triggered.wait(interval)

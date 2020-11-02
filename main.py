@@ -45,12 +45,13 @@ def main():
                             cooler_switch,
                             vessel_sensor, [csv_writer])
 
-    runnables = [(env_sensor, 1), (vessel_sensor, 1), (fridge_sensor, 1), (controller, config.get("control_interval")),
-                 (config, 5), (csv_writer, config.get("csv_interval"))]
+    runnables = [(env_sensor, 1, 0), (vessel_sensor, 1, 0), (fridge_sensor, 1, 0),
+                 (controller, config.get("control_interval"), 2),
+                 (config, 5, 0), (csv_writer, config.get("csv_interval"), 0)]
 
     threads = []
-    for runnable, interval in runnables:
-        t = Thread(target=runnable.start, args=(interval,))
+    for runnable, interval, init_delay in runnables:
+        t = Thread(target=runnable.start, args=(interval, init_delay))
         threads.append(t)
         t.start()
 
@@ -58,7 +59,7 @@ def main():
 
     logger.info("Received interrupt, shutting down")
 
-    for index, (runnable, interval) in enumerate(runnables):
+    for index, (runnable, interval, init_delay) in enumerate(runnables):
         runnable.stop()
         threads[index].join()
 
