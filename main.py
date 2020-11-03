@@ -47,7 +47,7 @@ def main():
 
     runnables = [(env_sensor, 1, 0), (vessel_sensor, 1, 0), (fridge_sensor, 1, 0),
                  (controller, config.get("control_interval"), 2),
-                 (config, 5, 0), (csv_writer, config.get("csv_interval"), 0)]
+                 (config, 5, 0), (csv_writer, config.get("csv_interval"), 0), (display, 1, 1)]
 
     threads = []
     for runnable, interval, init_delay in runnables:
@@ -63,7 +63,6 @@ def main():
         runnable.stop()
         threads[index].join()
 
-    display.shutdown()
     heater_switch.shutdown()
     # cooler_switch.shutdown()
 

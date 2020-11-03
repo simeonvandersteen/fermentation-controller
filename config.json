@@ -2,8 +2,8 @@
   "p": 1,
   "i": 0,
   "d": 0,
-  "target": 22,
+  "target": 20.0,
   "control_interval": 15,
-  "control_deadband": 0.3,
+  "control_deadband": 0.0,
   "csv_interval": 5
 }
