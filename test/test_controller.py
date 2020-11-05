@@ -241,8 +241,8 @@ class TestController:
 
         controller = Controller(config, 5, 0.5, Mock(), Mock(), temperature, [listener])
 
-        pid_mock.return_value = 6
+        pid_mock.return_value = .4
 
         controller.control()
 
-        listener.handle_controller.assert_called_with(4, 3, 2, 6)
+        listener.handle_controller.assert_called_with(4, 3, 2, .4)

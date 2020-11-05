@@ -47,7 +47,10 @@ class Controller(Runnable):
         self.__update_tunings()
 
         control = self.pid(self.current_temp.get())
-        self.logger.debug("Received control value %s", control)
+        (p, i, d) = self.pid.components
+
+        self.logger.debug("Received control value %s, pid values: %s %s %s", control, p, i, d)
+        self.__publish(p, i, d, control)
 
         if abs(control) < self.threshold:
             if self.heater.get():
@@ -71,9 +74,6 @@ class Controller(Runnable):
                 self.cooler.set(False)
             if self.heater.get():
                 self.heater.set(False)
-
-        (p, i, d) = self.pid.components
-        self.__publish(p, i, d, control)
 
     def __publish(self, p: float, i: float, d: float, control: float) -> None:
         for l in self.listeners:
