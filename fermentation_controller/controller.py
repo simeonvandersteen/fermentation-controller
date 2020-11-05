@@ -41,13 +41,13 @@ class Controller(Runnable):
         self.control()
 
     def shutdown(self) -> None:
-        self.logger.debug("Shutting down controller")
+        self.logger.info("Shutting down controller")
 
     def control(self) -> None:
         self.__update_tunings()
 
         control = self.pid(self.current_temp.get())
-        self.logger.info("Received control value %s", control)
+        self.logger.debug("Received control value %s", control)
 
         if abs(control) < self.threshold:
             if self.heater.get():
@@ -85,5 +85,5 @@ class Controller(Runnable):
         d = self.config.get("d")
         cur_p, cur_i, cur_d = self.pid.tunings
         if p != cur_p or i != cur_i or d != cur_d:
-            self.logger.debug("Setting PID values to %s, %s, %s.", p, i, d)
+            self.logger.info("Setting PID values to %s, %s, %s.", p, i, d)
             self.pid.tunings = (p, i, d)

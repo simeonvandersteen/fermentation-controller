@@ -9,7 +9,7 @@ from fermentation_controller.display import Display
 from fermentation_controller.sensor import Sensor
 from fermentation_controller.switch import Switch
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 

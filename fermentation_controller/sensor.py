@@ -30,8 +30,7 @@ class Sensor(Runnable):
         self.read()
 
     def shutdown(self) -> None:
-        self.logger.debug("Shutting down sensor '%s' (%s)", self.name, self.device_id)
-        pass
+        self.logger.info("Shutting down sensor '%s' (%s)", self.name, self.device_id)
 
     def read(self) -> None:
         path = self.device_dir + "/" + self.device_id + "/" + self.device_file

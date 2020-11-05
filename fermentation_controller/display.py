@@ -19,7 +19,7 @@ class Display(SensorListener, SwitchListener):
     def __post_init__(self) -> None:
         self.logger = logging.getLogger(__name__)
 
-        self.logger.debug("Initiating LCD")
+        self.logger.info("Initiating LCD")
         # Use compatibility mode to avoid driver timing issues https://github.com/dbrgn/RPLCD/issues/70
         self.lcd = CharLCD(compat_mode=True, numbering_mode=GPIO.BCM, cols=16, rows=2, pin_rs=22, pin_e=17,
                            pins_data=[26, 19, 13, 6])
@@ -54,5 +54,5 @@ class Display(SensorListener, SwitchListener):
             self.lcd.write_string(text)
 
     def shutdown(self) -> None:
-        self.logger.debug("Shutting down LCD")
+        self.logger.info("Shutting down LCD")
         self.lcd.close(clear=True)
