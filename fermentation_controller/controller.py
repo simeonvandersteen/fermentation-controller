@@ -46,7 +46,7 @@ class Controller(Runnable):
     def control(self) -> None:
         self.__update_tunings()
 
-        control = self.pid(self.current_temp.get())
+        control = self.pid(self.current_temp.get_average())
         (p, i, d) = self.pid.components
 
         self.logger.debug("Received control value %s, pid values: %s %s %s", control, p, i, d)

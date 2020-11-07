@@ -28,7 +28,7 @@ class TestController:
         temperature = Mock()
         current_temp = Mock()
 
-        temperature.get.return_value = current_temp
+        temperature.get_average.return_value = current_temp
 
         config = Mock()
         config.get.side_effect = lambda key: {"p": 1, "i": 2, "d": 3, "target": 23}.get(key)
@@ -58,7 +58,7 @@ class TestController:
         temperature = Mock()
         current_temp = Mock()
 
-        temperature.get.return_value = current_temp
+        temperature.get_average.return_value = current_temp
 
         config = Mock()
         config.get.side_effect = lambda key: {"p": 1, "i": 2, "d": 3, "target": 23}.get(key)
@@ -86,7 +86,7 @@ class TestController:
         temperature = Mock()
         current_temp = Mock()
 
-        temperature.get.return_value = current_temp
+        temperature.get_average.return_value = current_temp
 
         tunings_mock = PropertyMock()
         type(pid_mock).tunings = tunings_mock
@@ -226,7 +226,7 @@ class TestController:
         current_temp = Mock()
         listener = Mock()
 
-        temperature.get.return_value = current_temp
+        temperature.get_average.return_value = current_temp
 
         config = Mock()
         config.get.side_effect = lambda key: {"p": 1, "i": 2, "d": 3, "target": 23}.get(key)

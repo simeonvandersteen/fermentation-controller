@@ -1,8 +1,8 @@
 import logging
 from dataclasses import dataclass
+from math import floor
 from threading import Lock
 from typing import List
-from math import floor
 
 from RPLCD import CharLCD
 from RPi import GPIO
@@ -37,7 +37,7 @@ class Display(SensorListener, SwitchListener):
 
         self.__write(14, y, name[0].upper() if on else " ")
 
-    def handle_temperature(self, name: str, temperature: float) -> None:
+    def handle_temperature(self, name: str, temperature: float, avg_temperature: float) -> None:
         if name not in self.sensor_names:
             self.logger.warning("Device '%s' is not configured to be printed to LCD", name)
             return

@@ -29,14 +29,15 @@ def main():
     config = Config("./config.json")
 
     display = Display(["environment", "vessel", "fridge", "target"], ["heater", "cooler"])
-    display.handle_temperature("target", config.get("target"))
+    display.handle_temperature("target", config.get("target"), config.get("target"))
 
     csv_writer = CsvWriter(["environment", "vessel", "fridge", "target"], ["heater", "cooler"])
-    csv_writer.handle_temperature("target", config.get("target"))
+    csv_writer.handle_temperature("target", config.get("target"), config.get("target"))
 
-    env_sensor = Sensor("environment", "28-0301a2798a9f", "/sys/bus/w1/devices", [display, csv_writer])
-    vessel_sensor = Sensor("vessel", "28-0301a2799ddf", "/sys/bus/w1/devices", [display, csv_writer])
-    fridge_sensor = Sensor("fridge", "28-0301a27988e2", "/sys/bus/w1/devices", [display, csv_writer])
+    env_sensor = Sensor("environment", "28-0301a2798a9f", "/sys/bus/w1/devices", 1, [display, csv_writer])
+    vessel_sensor = Sensor("vessel", "28-0301a2799ddf", "/sys/bus/w1/devices", config.get("average_window"),
+                           [display, csv_writer])
+    fridge_sensor = Sensor("fridge", "28-0301a27988e2", "/sys/bus/w1/devices", 1, [display, csv_writer])
 
     heater_switch = Switch("heater", 20, [display, csv_writer])
     cooler_switch = Switch("cooler", 16, [display, csv_writer])

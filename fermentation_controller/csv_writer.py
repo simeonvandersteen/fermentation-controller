@@ -19,7 +19,9 @@ class CsvWriter(Runnable, SensorListener, SwitchListener, ControllerListener):
         self.logger = logging.getLogger(__name__)
         self.file = open('data.csv', 'a', newline='')
         self.writer = csv.writer(self.file)
-        self.data = {name: 0 for name in self.sensor_names + self.switch_names + ['p', 'i', 'd', 'control']}
+        sensor_avgs = list(map(lambda name: name + "_avg", self.sensor_names))
+        self.data = {name: 0 for name in
+                     self.sensor_names + sensor_avgs + self.switch_names + ['p', 'i', 'd', 'control']}
 
     def run(self) -> None:
         self.writer.writerow([time.time()] + list(self.data.values()))
@@ -31,8 +33,9 @@ class CsvWriter(Runnable, SensorListener, SwitchListener, ControllerListener):
     def handle_switch(self, name: str, on: bool) -> None:
         self.data[name] = int(on)
 
-    def handle_temperature(self, name: str, temperature: float) -> None:
+    def handle_temperature(self, name: str, temperature: float, avg_temperature: float) -> None:
         self.data[name] = temperature
+        self.data[name + "_avg"] = avg_temperature
 
     def handle_controller(self, p: float, i: float, d: float, control: float) -> None:
         self.data['p'] = p
