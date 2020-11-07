@@ -8,6 +8,7 @@ from fermentation_controller.csv_writer import CsvWriter
 from fermentation_controller.display import Display
 from fermentation_controller.sensor import Sensor
 from fermentation_controller.ssr import Ssr
+from fermentation_controller.limiter import Limiter
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -28,10 +29,10 @@ signal.signal(signal.SIGTERM, start_shutdown)
 def main():
     config = Config("./config.json")
 
-    display = Display(["environment", "vessel", "fridge", "target"], ["heater", "cooler"])
+    display = Display(["environment", "vessel", "fridge", "target"], ["heater", "cooler", "limiter"])
     display.handle_temperature("target", config.get("target"), config.get("target"))
 
-    csv_writer = CsvWriter(["environment", "vessel", "fridge", "target"], ["heater", "cooler"])
+    csv_writer = CsvWriter(["environment", "vessel", "fridge", "target"], ["heater", "cooler", "limiter"])
     csv_writer.handle_temperature("target", config.get("target"), config.get("target"))
 
     env_sensor = Sensor("environment", "28-0301a2798a9f", "/sys/bus/w1/devices", 1, [display, csv_writer])
@@ -42,9 +43,11 @@ def main():
     heater_ssr = Ssr("heater", 20, [display, csv_writer])
     cooler_ssr = Ssr("cooler", 16, [display, csv_writer])
 
-    controller = Controller(config, config.get("control_interval"), config.get("control_deadband"), heater_ssr,
-                            cooler_ssr,
-                            vessel_sensor, [csv_writer])
+    limiter = Limiter("limiter", heater_ssr, [display, csv_writer])
+
+    controller = Controller(config, config.get("control_interval"), config.get("control_deadband"),
+                            heater_ssr, cooler_ssr, limiter,
+                            vessel_sensor, fridge_sensor, [csv_writer])
 
     runnables = [(env_sensor, 1, 0), (vessel_sensor, 1, 0), (fridge_sensor, 1, 0),
                  (controller, config.get("control_interval"), 2),

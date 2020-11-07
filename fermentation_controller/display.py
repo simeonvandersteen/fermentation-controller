@@ -33,9 +33,10 @@ class Display(SensorListener, SwitchListener):
             self.logger.warning("'%s' is not configured to be printed to lcd", name)
             return
 
-        y = self.switch_names.index(name)
+        x = floor(self.switch_names.index(name) / 2)
+        y = self.switch_names.index(name) % 2
 
-        self.__write(14, y, name[0].upper() if on else " ")
+        self.__write(14 + x, y, name[0].upper() if on else " ")
 
     def handle_temperature(self, name: str, temperature: float, avg_temperature: float) -> None:
         if name not in self.sensor_names:

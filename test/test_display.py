@@ -48,7 +48,7 @@ class TestDisplay:
         cursor_mock = PropertyMock()
         type(lcd_mock).cursor_pos = cursor_mock
 
-        display = Display([], ["heater", "cooler"])
+        display = Display([], ["heater", "cooler", "limiter"])
 
         display.handle_switch("heater", True)
         cursor_mock.assert_called_with((0, 14))
@@ -64,6 +64,14 @@ class TestDisplay:
 
         display.handle_switch("cooler", False)
         cursor_mock.assert_called_with((1, 14))
+        lcd_mock.write_string.assert_called_with(" ")
+
+        display.handle_switch("limiter", True)
+        cursor_mock.assert_called_with((0, 15))
+        lcd_mock.write_string.assert_called_with("L")
+
+        display.handle_switch("limiter", False)
+        cursor_mock.assert_called_with((0, 15))
         lcd_mock.write_string.assert_called_with(" ")
 
     @patch('fermentation_controller.display.CharLCD')

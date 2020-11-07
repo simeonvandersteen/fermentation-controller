@@ -1,21 +1,40 @@
-import logging
 from unittest.mock import patch, Mock, PropertyMock
 
 import pytest
 
 from fermentation_controller.controller import Controller
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-
 
 class TestController:
 
+    def setup_method(self):
+        self.config = Mock()
+        self.config.get.side_effect = lambda key: {"p": 1, "i": 2, "d": 3, "target": 23,
+                                                   "heating_limit": 40,
+                                                   "limit_window": 5}.get(key)
+        self.limiter = Mock()
+        self.limiter.get.return_value = False
+
+        self.heater = Mock()
+        self.heater.get.return_value = False
+
+        self.cooler = Mock()
+        self.cooler.get.return_value = False
+
+        self.current_temp = Mock()
+        self.current_temp.get.return_value = 18
+
+        self.fridge_temp = Mock()
+        self.fridge_temp.get.return_value = 20
+
+        self.listener = Mock()
+
     @patch('fermentation_controller.controller.PID')
     def test_initiates_with_pid_values_and_target_from_config(self, pid_mock_class):
-        config = Mock()
-        config.get.side_effect = lambda key: {"p": 1, "i": 2, "d": 3, "target": 23}.get(key)
-
-        Controller(config, 5, 0.5, Mock(), Mock(), Mock(), [])
+        Controller(self.config, 5, 0.5,
+                   self.heater, self.cooler, self.limiter,
+                   self.current_temp, self.fridge_temp,
+                   [])
 
         pid_mock_class.assert_called_with(Kp=1, Ki=2, Kd=3,
                                           setpoint=23,
@@ -25,14 +44,6 @@ class TestController:
     def test_updates_pid_values_on_control(self, pid_mock_class):
         pid_mock = pid_mock_class.return_value
 
-        temperature = Mock()
-        current_temp = Mock()
-
-        temperature.get_average.return_value = current_temp
-
-        config = Mock()
-        config.get.side_effect = lambda key: {"p": 1, "i": 2, "d": 3, "target": 23}.get(key)
-
         tunings_mock = PropertyMock()
         type(pid_mock).tunings = tunings_mock
         tunings_mock.return_value = (1, 2, 3)
@@ -41,9 +52,14 @@ class TestController:
         type(pid_mock).components = components_mock
         components_mock.return_value = (4, 3, 2)
 
-        controller = Controller(config, 5, 0.5, Mock(), Mock(), temperature, [])
+        controller = Controller(self.config, 5, 0.5,
+                                self.heater, self.cooler, self.limiter,
+                                self.current_temp, self.fridge_temp,
+                                [])
 
-        config.get.side_effect = lambda key: {"p": 4, "i": 5, "d": 6, "target": 23}.get(key)
+        self.config.get.side_effect = lambda key: {"p": 4, "i": 5, "d": 6, "target": 23,
+                                                   "heating_limit": 40,
+                                                   "limit_window": 5}.get(key)
 
         pid_mock.return_value = 5
 
@@ -55,14 +71,6 @@ class TestController:
     def test_only_updates_pid_values_if_changed(self, pid_mock_class):
         pid_mock = pid_mock_class.return_value
 
-        temperature = Mock()
-        current_temp = Mock()
-
-        temperature.get_average.return_value = current_temp
-
-        config = Mock()
-        config.get.side_effect = lambda key: {"p": 1, "i": 2, "d": 3, "target": 23}.get(key)
-
         tunings_mock = PropertyMock()
         type(pid_mock).tunings = tunings_mock
         tunings_mock.return_value = (1, 2, 3)
@@ -71,22 +79,23 @@ class TestController:
         type(pid_mock).components = components_mock
         components_mock.return_value = (4, 3, 2)
 
-        controller = Controller(config, 5, 0.5, Mock(), Mock(), temperature, [])
+        controller = Controller(self.config, 5, 0.5,
+                                self.heater, self.cooler, self.limiter,
+                                self.current_temp, self.fridge_temp,
+                                [])
 
         pid_mock.return_value = 5
 
         controller.control()
 
-        tunings_mock.assert_called_once_with()
+        tunings_mock.assert_called_once_with()  # the getter, not the setter
 
     @patch('fermentation_controller.controller.PID')
     def test_feeds_current_temperature_to_pid(self, pid_mock_class):
         pid_mock = pid_mock_class.return_value
 
-        temperature = Mock()
         current_temp = Mock()
-
-        temperature.get_average.return_value = current_temp
+        self.current_temp.get_average.return_value = current_temp
 
         tunings_mock = PropertyMock()
         type(pid_mock).tunings = tunings_mock
@@ -96,7 +105,10 @@ class TestController:
         type(pid_mock).components = components_mock
         components_mock.return_value = (4, 3, 2)
 
-        controller = Controller(Mock(), 5, 0.5, Mock(), Mock(), temperature, [])
+        controller = Controller(self.config, 5, 0.5,
+                                self.heater, self.cooler, self.limiter,
+                                self.current_temp, self.fridge_temp,
+                                [])
 
         pid_mock.return_value = 5
 
@@ -108,10 +120,7 @@ class TestController:
     def test_dont_switch_heating_on_if_under_heating_threshold(self, pid_mock_class):
         pid_mock = pid_mock_class.return_value
 
-        heater = Mock()
-        heater.get.return_value = False
-        cooler = Mock()
-        cooler.get.return_value = True
+        self.heater.get.return_value = False
 
         pid_mock.return_value = 0.4
 
@@ -123,11 +132,14 @@ class TestController:
         type(pid_mock).components = components_mock
         components_mock.return_value = (4, 3, 2)
 
-        controller = Controller(Mock(), 5, 0.5, heater, cooler, Mock(), [])
+        controller = Controller(self.config, 5, 0.5,
+                                self.heater, self.cooler, self.limiter,
+                                self.current_temp, self.fridge_temp,
+                                [])
 
         controller.control()
 
-        heater.set.assert_not_called()
+        self.heater.set.assert_not_called()
 
     @pytest.mark.parametrize("control, h_current, c_current, h_switch, c_switch", [
         (5, False, False, True, None),  # switch heating on if above heating threshold
@@ -146,10 +158,8 @@ class TestController:
             self, pid_mock_class, control, h_current, h_switch, c_current, c_switch):
         pid_mock = pid_mock_class.return_value
 
-        heater = Mock()
-        heater.get.return_value = h_current
-        cooler = Mock()
-        cooler.get.return_value = c_current
+        self.heater.get.return_value = h_current
+        self.cooler.get.return_value = c_current
 
         pid_mock.return_value = control
 
@@ -161,19 +171,21 @@ class TestController:
         type(pid_mock).components = components_mock
         components_mock.return_value = (4, 3, 2)
 
-        controller = Controller(Mock(), 5, 0.5, heater, cooler, Mock(), [])
-
+        controller = Controller(self.config, 5, 0.5,
+                                self.heater, self.cooler, self.limiter,
+                                self.current_temp, self.fridge_temp,
+                                [])
         controller.control()
 
         if h_switch is None:
-            heater.set.assert_not_called()
+            self.heater.set.assert_not_called()
         else:
-            heater.set.assert_called_with(h_switch)
+            self.heater.set.assert_called_with(h_switch)
 
         if c_switch is None:
-            cooler.set.assert_not_called()
+            self.cooler.set.assert_not_called()
         else:
-            cooler.set.assert_called_with(c_switch)
+            self.cooler.set.assert_called_with(c_switch)
 
     @pytest.mark.parametrize("control, h_current, c_current, h_switch, c_switch", [
         (.1, False, False, True, None),  # switch heating on if above zero
@@ -189,10 +201,8 @@ class TestController:
             self, pid_mock_class, control, h_current, h_switch, c_current, c_switch):
         pid_mock = pid_mock_class.return_value
 
-        heater = Mock()
-        heater.get.return_value = h_current
-        cooler = Mock()
-        cooler.get.return_value = c_current
+        self.heater.get.return_value = h_current
+        self.cooler.get.return_value = c_current
 
         pid_mock.return_value = control
 
@@ -204,32 +214,43 @@ class TestController:
         type(pid_mock).components = components_mock
         components_mock.return_value = (4, 3, 2)
 
-        controller = Controller(Mock(), 5, 0, heater, cooler, Mock(), [])
+        controller = Controller(self.config, 5, 0,
+                                self.heater, self.cooler, self.limiter,
+                                self.current_temp, self.fridge_temp,
+                                [])
 
         controller.control()
 
         if h_switch is None:
-            heater.set.assert_not_called()
+            self.heater.set.assert_not_called()
         else:
-            heater.set.assert_called_with(h_switch)
+            self.heater.set.assert_called_with(h_switch)
 
         if c_switch is None:
-            cooler.set.assert_not_called()
+            self.cooler.set.assert_not_called()
         else:
-            cooler.set.assert_called_with(c_switch)
+            self.cooler.set.assert_called_with(c_switch)
 
+    @pytest.mark.parametrize("fridge_temperature, cb_current, cb_switch, h_current, h_switch", [
+        (41, False, True, True, None),  # x fridge temp > limit, limiter off, switch on, don't control
+        (41, True, None, False, None),  # x fridge temp > limit, limiter on, no-op
+        (39, True, None, False, None),  # x fridge (limit - 5) < temp < limit, limiter on, no-op
+        (34, True, False, False, True),  # x fridge temp < (limit - 5), limiter on, switch off, control
+        (39, False, None, False, True),  # fridge (limit - 5) < temp < limit, limiter off, control
+        (34, False, None, False, True),  # fridge temp < (limit - 5), limiter off, control
+    ])
     @patch('fermentation_controller.controller.PID')
-    def test_publishes_to_listeners(self, pid_mock_class):
+    def test_switch_off_heating_if_over_heating_limit(
+            self, pid_mock_class, fridge_temperature, cb_current, cb_switch, h_current, h_switch):
         pid_mock = pid_mock_class.return_value
 
-        temperature = Mock()
-        current_temp = Mock()
-        listener = Mock()
+        self.fridge_temp.get.return_value = fridge_temperature
 
-        temperature.get_average.return_value = current_temp
+        self.heater.get.return_value = h_current
+        self.cooler.get.return_value = False
+        self.limiter.get.return_value = cb_current
 
-        config = Mock()
-        config.get.side_effect = lambda key: {"p": 1, "i": 2, "d": 3, "target": 23}.get(key)
+        pid_mock.return_value = 3  # would trigger the heater
 
         tunings_mock = PropertyMock()
         type(pid_mock).tunings = tunings_mock
@@ -239,10 +260,42 @@ class TestController:
         type(pid_mock).components = components_mock
         components_mock.return_value = (4, 3, 2)
 
-        controller = Controller(config, 5, 0.5, Mock(), Mock(), temperature, [listener])
+        controller = Controller(self.config, 5, 0,
+                                self.heater, self.cooler, self.limiter,
+                                self.current_temp, self.fridge_temp,
+                                [])
+
+        controller.control()
+
+        if cb_switch is None:
+            self.limiter.set.assert_not_called()
+        else:
+            self.limiter.set.assert_called_with(cb_switch)
+
+        if h_switch is None:
+            self.heater.set.assert_not_called()
+        else:
+            self.heater.set.assert_called_with(h_switch)
+
+    @patch('fermentation_controller.controller.PID')
+    def test_publishes_to_listeners(self, pid_mock_class):
+        pid_mock = pid_mock_class.return_value
+
+        tunings_mock = PropertyMock()
+        type(pid_mock).tunings = tunings_mock
+        tunings_mock.return_value = (1, 2, 3)
+
+        components_mock = PropertyMock()
+        type(pid_mock).components = components_mock
+        components_mock.return_value = (4, 3, 2)
+
+        controller = Controller(self.config, 5, 0.5,
+                                self.heater, self.cooler, self.limiter,
+                                self.current_temp, self.fridge_temp,
+                                [self.listener])
 
         pid_mock.return_value = .4
 
         controller.control()
 
-        listener.handle_controller.assert_called_with(4, 3, 2, .4)
+        self.listener.handle_controller.assert_called_with(4, 3, 2, .4)

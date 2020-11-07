@@ -6,5 +6,7 @@
   "control_interval": 15,
   "control_deadband": 0.15,
   "average_window": 30,
+  "heating_limit": 40,
+  "limit_window": 10,
   "csv_interval": 1
 }
