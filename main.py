@@ -7,7 +7,7 @@ from fermentation_controller.controller import Controller
 from fermentation_controller.csv_writer import CsvWriter
 from fermentation_controller.display import Display
 from fermentation_controller.sensor import Sensor
-from fermentation_controller.switch import Switch
+from fermentation_controller.ssr import Ssr
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -39,11 +39,11 @@ def main():
                            [display, csv_writer])
     fridge_sensor = Sensor("fridge", "28-0301a27988e2", "/sys/bus/w1/devices", 1, [display, csv_writer])
 
-    heater_switch = Switch("heater", 20, [display, csv_writer])
-    cooler_switch = Switch("cooler", 16, [display, csv_writer])
+    heater_ssr = Ssr("heater", 20, [display, csv_writer])
+    cooler_ssr = Ssr("cooler", 16, [display, csv_writer])
 
-    controller = Controller(config, config.get("control_interval"), config.get("control_deadband"), heater_switch,
-                            cooler_switch,
+    controller = Controller(config, config.get("control_interval"), config.get("control_deadband"), heater_ssr,
+                            cooler_ssr,
                             vessel_sensor, [csv_writer])
 
     runnables = [(env_sensor, 1, 0), (vessel_sensor, 1, 0), (fridge_sensor, 1, 0),
@@ -65,8 +65,8 @@ def main():
         threads[index].join()
 
     display.shutdown()
-    heater_switch.shutdown()
-    # cooler_switch.shutdown()
+    heater_ssr.shutdown()
+    # cooler_ssr.shutdown()
 
 
 if __name__ == '__main__':
