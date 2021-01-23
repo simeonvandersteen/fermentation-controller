@@ -6,9 +6,9 @@ from fermentation_controller.config import Config
 from fermentation_controller.controller import Controller
 from fermentation_controller.csv_writer import CsvWriter
 from fermentation_controller.display import Display
+from fermentation_controller.limiter import Limiter
 from fermentation_controller.sensor import Sensor
 from fermentation_controller.ssr import Ssr
-from fermentation_controller.limiter import Limiter
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -49,9 +49,12 @@ def main():
                             heater_ssr, cooler_ssr, limiter,
                             vessel_sensor, fridge_sensor, [csv_writer])
 
-    runnables = [(env_sensor, 1, 0), (vessel_sensor, 1, 0), (fridge_sensor, 1, 0),
+    runnables = [(env_sensor, config.get("sensor_interval"), 0),
+                 (vessel_sensor, config.get("sensor_interval"), 0),
+                 (fridge_sensor, config.get("sensor_interval"), 0),
                  (controller, config.get("control_interval"), 2),
-                 (config, 5, 0), (csv_writer, config.get("csv_interval"), 0)]
+                 (config, config.get("config_interval"), 0),
+                 (csv_writer, config.get("csv_interval"), 0)]
 
     threads = []
     for runnable, interval, init_delay in runnables:
