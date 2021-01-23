@@ -1,0 +1,10 @@
+/usr/local/src/fermentation-controller/data.csv
+{
+  rotate 30
+  daily
+  copytruncate
+  nocompress
+  missingok
+  notifempty
+  dateext
+}
