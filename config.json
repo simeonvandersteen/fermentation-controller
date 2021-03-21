@@ -9,6 +9,7 @@
   "limit_window": 10,
   "control_interval": 15,
   "csv_interval": 15,
+  "influxdb_interval": 15,
   "sensor_interval": 1,
   "config_interval": 10
 }
