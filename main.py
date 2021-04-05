@@ -42,15 +42,15 @@ def main():
     csv_writer.handle_temperature("target", config.get("target"), config.get("target"))
     influxdb_writer.handle_temperature("target", config.get("target"), config.get("target"))
 
-    env_sensor = Sensor("environment", "28-0301a2798a9f", "/sys/bus/w1/devices", 1,
+    env_sensor = Sensor("environment", "28-0301a2798a9f", "/sys/bus/w1/devices", config.get("average_window"),
                         [display, csv_writer, influxdb_writer])
     vessel_sensor = Sensor("vessel", "28-0301a2799ddf", "/sys/bus/w1/devices", config.get("average_window"),
                            [display, csv_writer, influxdb_writer])
-    fridge_sensor = Sensor("fridge", "28-0301a27988e2", "/sys/bus/w1/devices", 1,
+    fridge_sensor = Sensor("fridge", "28-0301a27988e2", "/sys/bus/w1/devices", config.get("average_window"),
                            [display, csv_writer, influxdb_writer])
 
-    heater_ssr = Ssr("heater", 20, [display, csv_writer, influxdb_writer])
-    cooler_ssr = Ssr("cooler", 16, [display, csv_writer, influxdb_writer])
+    heater_ssr = Ssr("heater", 16, [display, csv_writer, influxdb_writer])
+    cooler_ssr = Ssr("cooler", 20, [display, csv_writer, influxdb_writer])
 
     limiter = Limiter("limiter", heater_ssr, [display, csv_writer, influxdb_writer])
 
