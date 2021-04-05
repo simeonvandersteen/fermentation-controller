@@ -5,6 +5,7 @@ from threading import Thread, Event
 from fermentation_controller.config import Config
 from fermentation_controller.controller import Controller
 from fermentation_controller.csv_writer import CsvWriter
+from fermentation_controller.influxdb_writer import InfluxDBWriter
 from fermentation_controller.display import Display
 from fermentation_controller.limiter import Limiter
 from fermentation_controller.sensor import Sensor
@@ -28,22 +29,30 @@ signal.signal(signal.SIGTERM, start_shutdown)
 
 def main():
     config = Config("./config.json")
+    secrets = Config("./secret.json")
 
     display = Display(["environment", "vessel", "fridge", "target"], ["heater", "cooler", "limiter"])
     display.handle_temperature("target", config.get("target"), config.get("target"))
 
-    csv_writer = CsvWriter(["environment", "vessel", "fridge", "target"], ["heater", "cooler", "limiter"])
+    csv_writer = CsvWriter(["environment", "vessel", "fridge", "target"],
+                           ["heater", "cooler", "limiter"])
+    influxdb_writer = InfluxDBWriter(["environment", "vessel", "fridge", "target"],
+                                     ["heater", "cooler", "limiter"], secrets)
+
     csv_writer.handle_temperature("target", config.get("target"), config.get("target"))
+    influxdb_writer.handle_temperature("target", config.get("target"), config.get("target"))
 
-    env_sensor = Sensor("environment", "28-0301a2798a9f", "/sys/bus/w1/devices", 1, [display, csv_writer])
+    env_sensor = Sensor("environment", "28-0301a2798a9f", "/sys/bus/w1/devices", config.get("average_window"),
+                        [display, csv_writer, influxdb_writer])
     vessel_sensor = Sensor("vessel", "28-0301a2799ddf", "/sys/bus/w1/devices", config.get("average_window"),
-                           [display, csv_writer])
-    fridge_sensor = Sensor("fridge", "28-0301a27988e2", "/sys/bus/w1/devices", 1, [display, csv_writer])
+                           [display, csv_writer, influxdb_writer])
+    fridge_sensor = Sensor("fridge", "28-0301a27988e2", "/sys/bus/w1/devices", config.get("average_window"),
+                           [display, csv_writer, influxdb_writer])
 
-    heater_ssr = Ssr("heater", 20, [display, csv_writer])
-    cooler_ssr = Ssr("cooler", 16, [display, csv_writer])
+    heater_ssr = Ssr("heater", 16, [display, csv_writer, influxdb_writer])
+    cooler_ssr = Ssr("cooler", 20, [display, csv_writer, influxdb_writer])
 
-    limiter = Limiter("limiter", heater_ssr, [display, csv_writer])
+    limiter = Limiter("limiter", heater_ssr, [display, csv_writer, influxdb_writer])
 
     controller = Controller(config, config.get("control_interval"), config.get("control_deadband"),
                             heater_ssr, cooler_ssr, limiter,
@@ -54,7 +63,8 @@ def main():
                  (fridge_sensor, config.get("sensor_interval"), 0),
                  (controller, config.get("control_interval"), 2),
                  (config, config.get("config_interval"), 0),
-                 (csv_writer, config.get("csv_interval"), 0)]
+                 (csv_writer, config.get("csv_interval"), 0),
+                 (influxdb_writer, config.get("influxdb_interval"), 0)]
 
     threads = []
     for runnable, interval, init_delay in runnables:

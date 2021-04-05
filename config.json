@@ -2,13 +2,14 @@
   "p": 1,
   "i": 0,
   "d": 0,
-  "target": 20.0,
+  "target": 19.5,
   "control_deadband": 0.15,
   "average_window": 30,
   "heating_limit": 40,
   "limit_window": 10,
   "control_interval": 15,
   "csv_interval": 15,
+  "influxdb_interval": 15,
   "sensor_interval": 1,
-  "config_interval": 10
+  "config_interval": 60
 }
