@@ -7,6 +7,7 @@ name = "pypi"
 rplcd = "*"
 "rpi.gpio" = "*"
 simple-pid = "*"
+influxdb = "*"
 
 [dev-packages]
 pytest = "*"
