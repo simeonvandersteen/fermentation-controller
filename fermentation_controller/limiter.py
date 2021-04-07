@@ -17,6 +17,7 @@ class Limiter(Switch):
     def __post_init__(self) -> None:
         self.logger = logging.getLogger(__name__)
         self.on = False
+        self.__publish(self.on)
 
     def set(self, on: bool) -> None:
         logging.info("Switching '%s' %s", self.name, "on" if on else "off")

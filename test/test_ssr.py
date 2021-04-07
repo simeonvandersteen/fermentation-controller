@@ -13,6 +13,16 @@ class TestSsr:
         mock_gpio.output.assert_called_once_with(3, mock_gpio.LOW)
 
     @patch('fermentation_controller.ssr.GPIO')
+    def test_publishes_default_to_listeners(self, _):
+        listener = Mock()
+        name = "heater"
+
+        Ssr(name, 3, [listener, listener])
+
+        assert listener.handle_switch.call_count == 2
+        listener.handle_switch.assert_called_with(name, False)
+
+    @patch('fermentation_controller.ssr.GPIO')
     def test_ssr_on(self, mock_gpio):
         ssr = Ssr("heater", 3, [])
         ssr.set(True)
@@ -36,7 +46,7 @@ class TestSsr:
         ssr = Ssr(name, 3, [listener, listener])
         ssr.set(True)
 
-        assert listener.handle_switch.call_count == 2
+        assert listener.handle_switch.call_count == 2 * 2  # twice for init, twice for update
         listener.handle_switch.assert_called_with(name, True)
 
     @patch('fermentation_controller.ssr.GPIO')

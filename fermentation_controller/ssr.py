@@ -23,6 +23,8 @@ class Ssr(Switch):
         GPIO.setup(self.port, GPIO.OUT)
         GPIO.output(self.port, GPIO.LOW)
 
+        self.__publish(self.on)
+
     def set(self, on: bool) -> None:
         logging.debug("Switching '%s' %s", self.name, "on" if on else "off")
         GPIO.output(self.port, GPIO.HIGH if on else GPIO.LOW)
